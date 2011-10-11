@@ -8,6 +8,8 @@ import re
 
 from django.core.serializers.json import DjangoJSONEncoder
 
+from extdirect.django.utils import json_encode
+
 
 class Serializer(extdirectSerializer):
     # this serialiser create sub-keys for related fields and adds a __unicode__ key for any model instance
@@ -41,7 +43,8 @@ class Serializer(extdirectSerializer):
         
  
 def jsonDump( obj ):
-    return simplejson.dumps(obj, cls=DjangoJSONEncoder, ensure_ascii=False, indent=4)
+    #return simplejson.dumps(obj, cls=DjangoJSONEncoder, ensure_ascii=False, indent=4)
+    return json_encode(obj)
                     
 def jsonDumpStripped( inDict ):
     """ strip some specials values for ExtJs in the simplejson dump """

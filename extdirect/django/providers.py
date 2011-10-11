@@ -4,6 +4,9 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from django.utils import simplejson
 from django.core.serializers.json import DjangoJSONEncoder
 from django.conf import settings
+from django.core.urlresolvers import reverse
+from django.conf.urls.defaults import patterns, url
+from django.views.generic.simple import redirect_to
 
 from extserializer import jsonDumpStripped
 
@@ -22,11 +25,26 @@ class ExtDirectProvider(object):
     Abstract class for different ExtDirect Providers implementations
     """
     
-    def __init__(self, url, type, id=None):        
-        self.type = type        
-        self.url = url
+    def __init__(self, type, id=None, url=None, urlname=None):
+        self.type = type
         self.id = id
-    
+
+        if not url is None:
+            self.url = url
+        elif not urlname is None:
+            self.urlname = urlname
+        else:
+            self.url = '/'
+
+    @property
+    def baseurl(self):
+        if hasattr(self, 'url'):
+            return self.url
+        elif hasattr(self, 'urlname'):
+            return reverse(self.urlname)
+        else: return None
+
+
     @property
     def _config(self):
         """
@@ -79,6 +97,20 @@ class ExtDirectProvider(object):
         js =  SCRIPT % config
                 
         return HttpResponse(js, mimetype='text/javascript')
+
+    def get_urls(self):
+        """
+        Return the URL patterns.
+        """
+        urlpatterns =  patterns('',
+            (r'^router/$',  self.router ),
+            (r'^provider.js$', self.script ),
+        )
+        if hasattr(self, 'urlname'):
+            urlpatterns +=  patterns('',
+                url(r'^$', redirect_to, {'url': '/'}, name=self.urlname)
+            )
+        return urlpatterns
     
 class ExtRemotingProvider(ExtDirectProvider):
     """
@@ -87,8 +119,8 @@ class ExtRemotingProvider(ExtDirectProvider):
     
     type = 'remoting'
     
-    def __init__(self, namespace, url, id=None, descriptor='Descriptor'):
-        super(ExtRemotingProvider, self).__init__(url, self.type, id)
+    def __init__(self, namespace, id=None, url=None, urlname=None, descriptor='Descriptor'):
+        super(ExtRemotingProvider, self).__init__(self.type, id, url=url, urlname=urlname)
         
         self.namespace = namespace        
         self.actions = {}
@@ -115,7 +147,7 @@ Ext.ns('%s');
     @property
     def _config(self):
         config = {
-            'url'       : self.url,
+            'url'       : '%srouter/' % (self.baseurl,),
             'namespace' : self.namespace,
             'type'      : self.type,
             'actions'   : {}                
@@ -309,14 +341,22 @@ Ext.ns('%s');
             mimetype = 'application/json'
             
         return HttpResponse(jsonDumpStripped(response), mimetype=mimetype)
-        
+
+    def get_urls(self):
+        urlpatterns =  super(ExtRemotingProvider, self).get_urls()
+        urlpatterns +=  patterns('',
+            (r'^api/$',   self.api ),
+        )
+        return urlpatterns
+
+
 
 class ExtPollingProvider(ExtDirectProvider):
     
     type = 'polling'
     
-    def __init__(self, url, event, func=None, login_required=False, permission=None, id=None):
-        super(ExtPollingProvider, self).__init__(url, self.type, id)
+    def __init__(self, event, func=None, login_required=False, permission=None, id=None, url=None, urlname=None):
+        super(ExtPollingProvider, self).__init__(self.type, id, url=url, urlname=urlname)
         
         self.func = func
         self.event = event
@@ -327,7 +367,7 @@ class ExtPollingProvider(ExtDirectProvider):
     @property
     def _config(self):
         config = {
-            'url'   : self.url,
+            'url'   : '%srouter/' % (self.baseurl,),
             'type'  : self.type        
         }
         if self.id:
