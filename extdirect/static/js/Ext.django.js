@@ -94,6 +94,7 @@ Ext.django.IndexStore = Ext.extend(Ext.django.Store, {
  
    
 Ext.django.ComboBox = Ext.extend(Ext.ux.AwesomeCombo, {
+	djangons: django || null,
     // direct model AwesomeCombo
     constructor:function(config) {
         var pageSize = config.pageSize || 0;
@@ -106,7 +107,7 @@ Ext.django.ComboBox = Ext.extend(Ext.ux.AwesomeCombo, {
             ,format:'object'
             ,pageSize:pageSize
             ,store: new Ext.django.IndexStore({
-                api:{read:django[model].read}
+                api:{read:this.djangons[model].read}
                 ,baseParams:{
                     start:0
                     ,limit:pageSize
@@ -129,7 +130,7 @@ Ext.django.ComboBox = Ext.extend(Ext.ux.AwesomeCombo, {
  
    
 Ext.django.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
-
+	djangons: django || null,
 	limit:10
 	,loadMask:true
     ,columnsConfig:[]
@@ -157,7 +158,7 @@ Ext.django.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
         var storeConfig = {
             autoSave:true
             ,api:{
-                read:django[model].read
+                read:this.djangons[model].read
             }
             ,baseParams:{
                 meta:true
@@ -170,7 +171,7 @@ Ext.django.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
             this.editor = new Ext.ux.grid.RowEditor({
                 saveText: 'Update'
             });
-            storeConfig['api'] = django[model]
+            storeConfig['api'] = this.djangons[model]
             this.plugins = [this.editor]
             storeConfig['writer'] = new Ext.data.JsonWriter({
                  encode:false
@@ -288,6 +289,7 @@ Ext.django.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
  
 
 Ext.django.Form = Ext.extend(Ext.Panel, {
+	djangons: django || null,
     border: false,
     padding: 10,
 
@@ -314,7 +316,7 @@ Ext.django.Form = Ext.extend(Ext.Panel, {
         
     }
     ,getDirectAction:function() {
-        return django['forms_' + this.formCls];
+        return this.djangons['forms_' + this.formCls];
     }
     ,loadCallback:function(data, result) {
         console.log('loadCallback', this, arguments);
@@ -378,13 +380,14 @@ Ext.django.Form = Ext.extend(Ext.Panel, {
 
  
 Ext.django.DataView = Ext.extend(Ext.DataView ,{
+    djangons: django || null,
     model:'app.Model',
     tpl:null,
     initComponent:function() {
-        var model = this.model.replace('.','_')
+        var model = this.model.replace('.','_');
         var store = new Ext.django.Store({
             api:{
-                read:django[model].read
+                read:this.djangons[model].read
             },
             autoLoad:true,
             baseParams:{

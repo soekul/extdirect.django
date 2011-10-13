@@ -7,18 +7,14 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.conf.urls.defaults import patterns, url
 from django.views.generic.simple import redirect_to
+from django.shortcuts import render, render_to_response, get_object_or_404
+from django.template import context, loader, RequestContext
 
 from extserializer import jsonDumpStripped
 
 import extforms
 
 from crud import ExtDirectCRUDComplex ,  format_form_errors
-
-SCRIPT = """
-Ext.onReady(function() {
-    Ext.Direct.addProvider(%s);
-});    
-"""
 
 class ExtDirectProvider(object):
     """
@@ -78,7 +74,7 @@ class ExtDirectProvider(object):
         """
         raise NotImplementedError
     
-    def script(self, request):
+    def script(self, request, template="extdirect/django/script.js"):
         """
         Return a HttpResponse with the javascript code needed
         to register the DirectProvider in Ext.
@@ -94,8 +90,8 @@ class ExtDirectProvider(object):
             )
         """
         config = jsonDumpStripped(self._config)
-        js =  SCRIPT % config
-                
+        js = render(request, template, {'config': config})
+
         return HttpResponse(js, mimetype='text/javascript')
 
     def get_urls(self):
@@ -127,7 +123,7 @@ class ExtRemotingProvider(ExtDirectProvider):
         self.descriptor = descriptor
 
 
-    def api(self, request):
+    def api(self, request, template="extdirect/django/api.js"):
         conf = self._config
         descriptor = self.namespace + '.' + self.descriptor
         
@@ -136,12 +132,14 @@ class ExtRemotingProvider(ExtDirectProvider):
             mimetype = 'application/json'
             response = jsonDumpStripped(conf)
         else:
-            response = """
-Ext.ns('%s');
-%s = %s
-""" % (self.namespace, descriptor, jsonDumpStripped(self._config))
             mimetype = 'text/javascript'
-            
+            template_vars = {
+                'namespace': self.namespace,
+                'descriptor': descriptor,
+                'config': jsonDumpStripped(self._config), 
+            }
+            response = render(request, template, template_vars)
+
         return HttpResponse(response, mimetype=mimetype)
         
     @property
