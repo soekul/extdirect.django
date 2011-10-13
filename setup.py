@@ -22,6 +22,9 @@ setup(name='extdirect.django',
       license='BSD',      
       namespace_packages=['extdirect'],
       packages=find_packages(exclude=['ez_setup']),
+      package_data = {
+          'extdirect' : [ '*.html', '*.css', '*.js' ]
+      },
       test_suite="extdirect.django.tests",
       include_package_data=True,
       zip_safe=False,
