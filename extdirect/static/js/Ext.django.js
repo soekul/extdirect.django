@@ -94,7 +94,7 @@ Ext.django.IndexStore = Ext.extend(Ext.django.Store, {
  
    
 Ext.django.ComboBox = Ext.extend(Ext.ux.AwesomeCombo, {
-	djangons: django || null,
+	djangons: null,
     // direct model AwesomeCombo
     constructor:function(config) {
         var pageSize = config.pageSize || 0;
@@ -130,7 +130,7 @@ Ext.django.ComboBox = Ext.extend(Ext.ux.AwesomeCombo, {
  
    
 Ext.django.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
-	djangons: django || null,
+	djangons: null,
 	limit:10
 	,loadMask:true
     ,columnsConfig:[]
@@ -289,7 +289,7 @@ Ext.django.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
  
 
 Ext.django.Form = Ext.extend(Ext.Panel, {
-	djangons: django || null,
+	djangons: null,
     border: false,
     padding: 10,
 
@@ -380,7 +380,7 @@ Ext.django.Form = Ext.extend(Ext.Panel, {
 
  
 Ext.django.DataView = Ext.extend(Ext.DataView ,{
-    djangons: django || null,
+    djangons: null,
     model:'app.Model',
     tpl:null,
     initComponent:function() {
